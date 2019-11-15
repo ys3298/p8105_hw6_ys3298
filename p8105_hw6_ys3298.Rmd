@@ -35,7 +35,8 @@ bw_clean = bw %>%
     malform = factor(malform, levels = c("0", "1"), labels = c("absent", "present")),
     frace = factor(frace, levels = c("1", "2", "3", "4", "8", "9"), labels = c("White", "Black", "Asian", "Puerto Rican", "Other", "Unknown")),
     mrace = factor(mrace, levels = c("1", "2", "3", "4", "8"), labels = c("White", "Black", "Asian", "Puerto Rican", "Other"))
-    )
+    ) %>% 
+  select(bwt, everything())
 
 # show data
 bw_clean
@@ -47,6 +48,41 @@ sum(is.na(bw_clean))
 For missing values, there are `r sum(is.na(bw_clean))` missing values.
 
 ## Propose a regression model for birthweight
+
+### Modeling process
+```{r}
+full_mod = lm(bwt ~ ., data = bw_clean)
+
+BIC_mod = step (full_mod, direction = "backward",
+                k = log(nrow(bw_clean)), trace = FALSE)
+summary(BIC_mod)
+```
+
+### show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+
+
+## Compare your model to two others
+
+Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+
+### One using length at birth and gestational age as predictors (main effects only)
+
+```{r}
+blength_gaweeks = lm(bwt ~ blength + gaweeks, data = bw_clean) 
+
+blength_gaweeks %>% 
+  broom::tidy() %>% knitr::kable()
+```
+
+### One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+
+```{r}
+
+interac = lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = bw_clean) 
+
+interac %>% broom::tidy() %>% knitr::kable()
+```
+
 
 
 # Problem 2
