@@ -7,6 +7,8 @@ output: github_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(modelr)
+library(mgcv)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -52,13 +54,33 @@ For missing values, there are `r sum(is.na(bw_clean))` missing values.
 ### Modeling process
 ```{r}
 full_mod = lm(bwt ~ ., data = bw_clean)
+summary(full_mod)
+
+full_mod %>% broom::tidy() %>% knitr::kable()
+
 
 BIC_mod = step (full_mod, direction = "backward",
                 k = log(nrow(bw_clean)), trace = FALSE)
 summary(BIC_mod)
 ```
+### Results
+```{r}
+BIC_mod %>% broom::tidy() %>% knitr::kable()
+```
 
 ### show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+
+```{r}
+bw_clean %>% 
+  add_residuals(BIC_mod) %>% 
+  add_predictions(BIC_mod) %>% 
+  ggplot(aes(x = pred, y = resid)) + geom_point(color = "pink") + geom_line( y = 0, color = "red") +
+  labs(
+    x = "Fitted Values",
+    y = "Residuals",
+    title = "Residuals vs Fitted Values"
+  ) 
+```
 
 
 ## Compare your model to two others
@@ -68,9 +90,9 @@ Make this comparison in terms of the cross-validated prediction error; use cross
 ### One using length at birth and gestational age as predictors (main effects only)
 
 ```{r}
-blength_gaweeks = lm(bwt ~ blength + gaweeks, data = bw_clean) 
+main_mod = lm(bwt ~ blength + gaweeks, data = bw_clean) 
 
-blength_gaweeks %>% 
+main_mod %>% 
   broom::tidy() %>% knitr::kable()
 ```
 
@@ -78,12 +100,39 @@ blength_gaweeks %>%
 
 ```{r}
 
-interac = lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = bw_clean) 
+interaction_mod = lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = bw_clean) 
 
-interac %>% broom::tidy() %>% knitr::kable()
+interaction_mod %>% broom::tidy() %>% knitr::kable()
 ```
 
+### Cross validation
 
+```{r}
+cv_df =
+  crossv_mc(bw_clean, 100) %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble)) %>% 
+  mutate(BIC_mod = map(train, ~BIC_mod),
+         main_effect = map(train, ~main_mod),
+         interaction = map(train, ~interaction_mod)) %>% 
+  mutate(rmse_BIC = map2_dbl(BIC_mod, test, ~rmse(model = .x, data = .y)),
+         rmse_main= map2_dbl(main_effect, test, ~rmse(model = .x, data = .y)),
+         rmse_interaction = map2_dbl(interaction, test, ~rmse(model = .x, data = .y))
+         )
+
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse, fill = model, alpha = 0.5)) + geom_violin()
+```
+
+From the plot, we noticed that the rmse for model only consider the main effects are pretty high. The model consider interactions are relatively high compared with the BIC model. 
 
 # Problem 2
 
