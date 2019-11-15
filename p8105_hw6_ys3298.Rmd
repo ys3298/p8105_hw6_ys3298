@@ -1,0 +1,23 @@
+---
+title: "p8105_hw6_ys3298"
+author: "Yimeng Shang(ys3298)"
+date: "11/15/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+```
+
+
+
