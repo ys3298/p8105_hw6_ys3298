@@ -19,5 +19,166 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 
 ```
 
+# Problem 1
+In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. 
+
+## load and clean data
+```{r}
+#load
+bw = read_csv("./data/birthweight.csv") %>% 
+  janitor::clean_names()
+
+# factor
+bw_clean = bw %>% 
+  mutate(
+    babysex = factor(babysex, levels = c("1", "2"), labels = c("male", "female")),
+    malform = factor(malform, levels = c("0", "1"), labels = c("absent", "present")),
+    frace = factor(frace, levels = c("1", "2", "3", "4", "8", "9"), labels = c("White", "Black", "Asian", "Puerto Rican", "Other", "Unknown")),
+    mrace = factor(mrace, levels = c("1", "2", "3", "4", "8"), labels = c("White", "Black", "Asian", "Puerto Rican", "Other"))
+    )
+
+# show data
+bw_clean
+
+# Check missing value
+sum(is.na(bw_clean)) 
+```
+
+For missing values, there are `r sum(is.na(bw_clean))` missing values.
+
+## Propose a regression model for birthweight
+
+
+# Problem 2
+
+For this problem, we’ll use the 2017 Central Park weather data that we’ve seen elsewhere. The code chunk below (adapted from the course website) will download these data.
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+```{r}
+regression_df = 
+  weather_df %>% 
+  mutate(tmax_y = tmax, tmin_x = tmin) %>% 
+  select(tmax_y, tmin_x) 
+```
+
+The boostrap is helpful when you’d like to perform inference for a parameter / value / summary that doesn’t have an easy-to-write-down distribution in the usual repeated sampling framework. We’ll focus on a simple linear regression with tmax as the response and tmin as the predictor, and are interested in the distribution of two quantities estimated from these data:
+
+
+```{r}
+bootstrap_results =
+  regression_df %>% 
+  modelr::bootstrap(n = 5000) %>% 
+  mutate(
+    models = map(strap, ~lm(tmax_y ~ tmin_x, data = .x) ),
+    results = map(models, broom::tidy),
+    variables = map(models, broom::glance)) %>% 
+  select(-strap, -models) %>% 
+  unnest(results,variables) 
+```
+
+## plot of r^2
+```{r}
+# plot r^2
+bootstrap_results %>% 
+  filter(term == "tmin_x") %>% 
+  select(r.squared, adj.r.squared) %>% 
+  ggplot() + geom_histogram(aes(x = r.squared, y =..density.., alpha = 0.3, fill = "pink")) + geom_density(aes(x = r.squared,y=..density.., alpha = 0.3, color = "pink")) +
+  labs(
+    title = "Distribution Plot of the Estimate of r^2",
+    x = "Estimate of r^2",
+    y = "Count")
+ # + geom_histogram(aes(x = adj.r.squared, y=..density.., alpha = 0.3, fill = "blue")) + geom_density(aes(x = adj.r.squared,y=..density.., alpha = 0.3, color = "blue"))
+```
+
+**Describe:**
+
+## CI of r^2
+```{r}
+# compute 95% CI for r^2
+CI_r2 = 
+  bootstrap_results %>% 
+  filter(term == "tmin_x") %>% 
+  pull(r.squared) %>% 
+  quantile(c(0.025, 0.975))
+
+CI_r2
+
+bootstrap_results %>% 
+  filter(term == "tmin_x") %>% 
+  select(r.squared, adj.r.squared) %>% 
+  ggplot() + geom_histogram(aes(x = r.squared, y =..density.., alpha = 0.3, fill = "pink")) + geom_density(aes(x = r.squared,y=..density.., alpha = 0.3, color = "pink")) +
+  geom_vline(aes(xintercept = CI_r2[[1]]), color = "red") +
+  geom_vline(aes(xintercept = CI_r2[[2]]), color = "red") +
+  labs(
+    title = "Distribution Plot of the Estimate of r^2",
+    x = "Estimate of r^2",
+    y = "Count") 
+```
+
+##
+
+
+## plot log(β̂ 0∗β̂ 1)
+```{r}
+# compute log(β̂ 0∗β̂ 1)
+# plot log(β̂ 0∗β̂ 1)
+
+log =
+  bootstrap_results %>% 
+  select(.id, term, estimate) %>% 
+  pivot_wider(
+    id_cols = .id,
+    values_from = estimate,
+    names_from = term
+  ) %>% 
+  janitor::clean_names() %>% 
+  mutate(log_value = log(intercept*tmin_x)) 
+
+log %>% 
+  ggplot() + geom_histogram(aes(x = log_value, y =..density.., alpha = 0.3, fill = "pink")) + geom_density(aes(x = log_value, y=..density.., alpha = 0.3, color = "pink")) +
+  labs(
+    title = "Distribution Plot of the Estimate of log(beta0_hat * beta1_hat)",
+    x = "Estimate of log(beta0_hat * beta1_hat)",
+    y = "Count")
+
+```
+
+
+**Describe:**
+
+## 95% CI log(β̂ 0∗β̂ 1)
+```{r}
+# compute 95% CI for log(β̂ 0∗β̂ 1)
+
+CI_log = 
+  log %>% 
+  pull(log_value) %>% 
+  quantile(c(0.025, 0.975))
+
+CI_log
+```
+
+```{r}
+log %>% 
+  ggplot() + geom_histogram(aes(x = log_value, y =..density.., alpha = 0.3, fill = "pink")) + geom_density(aes(x = log_value, y=..density.., alpha = 0.3, color = "pink")) + 
+  geom_vline(aes(xintercept = CI_log[[1]]), color = "red") +
+  geom_vline(aes(xintercept = CI_log[[2]]), color = "red") +
+  labs(
+    title = "Distribution Plot of the Estimate of log(beta0_hat * beta1_hat)",
+    x = "Estimate of log(beta0_hat * beta1_hat)",
+    y = "Count")
+```
 
 
