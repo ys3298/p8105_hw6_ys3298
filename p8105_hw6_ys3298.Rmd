@@ -52,21 +52,25 @@ For missing values, there are `r sum(is.na(bw_clean))` missing values.
 ## Propose a regression model for birthweight
 
 ### Modeling process
+
+#### Full model
 ```{r}
 full_mod = lm(bwt ~ ., data = bw_clean)
 summary(full_mod)
 
 full_mod %>% broom::tidy() %>% knitr::kable()
+```
+Firstly, I put all variables into consideration to establish a full model for linear regression. From the result, I noticed that there are lots of variables is not significant, which means that we can not reject the hypothesis that slopes of these variables is not equal to zero, ie the effect of these variables on the outcome can be ignored. Thus, there are some redundant variables in the full model, which makes it a not so good model.
 
-
+#### BIC model
+```{r}
 BIC_mod = step (full_mod, direction = "backward",
                 k = log(nrow(bw_clean)), trace = FALSE)
 summary(BIC_mod)
-```
-### Results
-```{r}
+
 BIC_mod %>% broom::tidy() %>% knitr::kable()
 ```
+Bayesian information criterion (BIC) is a criterion for model selection among a finite set of models. The models can be tested using corresponding BIC values. Lower BIC value indicates lower penalty terms hence a better model.
 
 ### show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 
@@ -81,7 +85,6 @@ bw_clean %>%
     title = "Residuals vs Fitted Values"
   ) 
 ```
-
 
 ## Compare your model to two others
 
@@ -132,7 +135,7 @@ cv_df %>%
   ggplot(aes(x = model, y = rmse, fill = model, alpha = 0.5)) + geom_violin()
 ```
 
-From the plot, we noticed that the rmse for model only consider the main effects are pretty high. The model consider interactions are relatively high compared with the BIC model. 
+From the plot, we noticed that the rmse for model only consider the main effects are pretty high. The model consider interactions are relatively high compared with the BIC model, which means the BIC model is good compared to these two. 
 
 # Problem 2
 
@@ -160,7 +163,6 @@ regression_df =
 
 The boostrap is helpful when you’d like to perform inference for a parameter / value / summary that doesn’t have an easy-to-write-down distribution in the usual repeated sampling framework. We’ll focus on a simple linear regression with tmax as the response and tmin as the predictor, and are interested in the distribution of two quantities estimated from these data:
 
-
 ```{r}
 bootstrap_results =
   regression_df %>% 
@@ -184,7 +186,6 @@ bootstrap_results %>%
     title = "Distribution Plot of the Estimate of r^2",
     x = "Estimate of r^2",
     y = "Count")
- # + geom_histogram(aes(x = adj.r.squared, y=..density.., alpha = 0.3, fill = "blue")) + geom_density(aes(x = adj.r.squared,y=..density.., alpha = 0.3, color = "blue"))
 ```
 
 **Describe:** From the plot, we can see the estimated r^2 basically follows a normal distribution, although have a heavier tail on the left.
