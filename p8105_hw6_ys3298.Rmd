@@ -60,6 +60,7 @@ summary(full_mod)
 
 full_mod %>% broom::tidy() %>% knitr::kable()
 ```
+
 Firstly, I put all variables into consideration to establish a full model for linear regression. From the result, I noticed that there are lots of variables is not significant, which means that we can not reject the hypothesis that slopes of these variables is not equal to zero, ie the effect of these variables on the outcome can be ignored. Thus, there are some redundant variables in the full model, which makes it a not so good model.
 
 #### BIC model
