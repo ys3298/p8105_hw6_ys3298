@@ -64,13 +64,19 @@ Firstly, I put all variables into consideration to establish a full model for li
 
 #### BIC model
 ```{r}
-BIC_mod = step (full_mod, direction = "backward",
+BIC_mod = step(full_mod, direction = "backward",
                 k = log(nrow(bw_clean)), trace = FALSE)
 summary(BIC_mod)
 
 BIC_mod %>% broom::tidy() %>% knitr::kable()
 ```
-Bayesian information criterion (BIC) is a criterion for model selection among a finite set of models. The models can be tested using corresponding BIC values. Lower BIC value indicates lower penalty terms hence a better model.
+
+Because we only have a little knowledge about the study and base on hyphothesis may cause bias and depended too much on s
+ubjectivity. So I used data-driven method called Bayesian information criterion. 
+
+BIC is a criterion for model selection among a finite set of models. The models can be tested using corresponding BIC values. Lower BIC value indicates lower penalty terms hence a better model. In R, there's a function 'step' to do this process.
+
+From the result above, baby's sex, baby's head circumference at birth, baby's length at birth, mother's weight at delivery, gestational age in weeks, mother's height, mother's race, mother's pre-pregnancy weight and average nomberof cigarettes smoked per day during pregnancy have significant influence on the baby's birth weight. In detail, female baby, head, length, mother's weight at delivery, gestational age in weeks and mother's height have a positive effect on the baby's weight (baby tend to my heavier with increase of these factors.). And, mothers are Black, Asian, Puerto Rican tend to have less heavy baby. Mother's pre-pregnancy weight and average nomberof cigarettes smoked per day during pregnancy have a negative effect on baby's weight.
 
 ### show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 
