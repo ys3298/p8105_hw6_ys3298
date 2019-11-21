@@ -9,6 +9,7 @@ output: github_document
 library(tidyverse)
 library(modelr)
 library(mgcv)
+set.seed(10)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -149,6 +150,7 @@ From the plot, we noticed that the rmse for model only consider the main effects
 For this problem, we’ll use the 2017 Central Park weather data that we’ve seen elsewhere. The code chunk below (adapted from the course website) will download these data.
 
 ```{r}
+set.seed(10)
 weather_df = 
   rnoaa::meteo_pull_monitors(
     c("USW00094728"),
