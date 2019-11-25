@@ -94,7 +94,7 @@ bw_clean %>%
   ) 
 ```
 
-Comments: From the plot, we can see there are a few outliers. And the variances are not equal.
+Comments: From the plot, we can see there are a few outliers. And residuals bounded aroud zero.
 
 ## Compare your model to two others
 
