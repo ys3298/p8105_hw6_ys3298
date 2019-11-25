@@ -208,7 +208,8 @@ CI_r2 =
   pull(r.squared) %>% 
   quantile(c(0.025, 0.975))
 
-CI_r2
+CI_r2 %>% 
+  knitr::kable()
 
 bootstrap_results %>% 
   filter(term == "tmin_x") %>% 
@@ -259,7 +260,8 @@ CI_log =
   pull(log_value) %>% 
   quantile(c(0.025, 0.975))
 
-CI_log
+CI_log %>% 
+  knitr::kable()
 ```
 
 ```{r}
